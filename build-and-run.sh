@@ -24,6 +24,7 @@ echo "🐳 Building Docker image with multi-stage approach..."
 DOCKER_BUILDKIT=1 docker build \
     --secret id=maven_settings,src="$SETTINGS_PATH" \
     --build-arg BUILDKIT_INLINE_CACHE=1 \
+    --progress=plain \
     -t sonar-allure-demo:multi-jdk .
 
 if [ $? -eq 0 ]; then

@@ -1,6 +1,6 @@
 # Multi-stage build for Java Maven project
 # Stage 1: Compile and test with JDK 8
-FROM eclipse-temurin:8-jdk AS compiler
+FROM docker.opsbox.dev/eclipse-temurin:8-jdk AS compiler
 
 # Set working directory
 WORKDIR /code
@@ -18,8 +18,8 @@ RUN --mount=type=secret,id=maven_settings,target=/root/.m2/settings.xml \
     chmod +x /code/mvnw && \
     /code/mvnw clean test
 
-# Stage 2: SonarQube scan with JDK 11
-FROM eclipse-temurin:11-jdk AS sonar-scanner
+# Stage 2: SonarQube scan with JDK 11 (includes Allure dependency)
+FROM docker.opsbox.dev/eclipse-temurin:11-jdk AS sonar-scanner
 
 # Set working directory
 WORKDIR /code
@@ -36,14 +36,20 @@ COPY --from=compiler /code/target/allure-results/ /code/target/allure-results/
 # Copy source code and project files
 COPY ./ /code/
 
-# Run SonarQube scan with JDK 11
+# Generate Allure report first (required for SonarQube)
 RUN --mount=type=secret,id=maven_settings,target=/root/.m2/settings.xml \
     --mount=type=cache,target=/root/.m2/repository \
     chmod +x /code/mvnw && \
-    /code/mvnw sonar:sonar
+    /code/mvnw allure:report
+
+# Run SonarQube scan with JDK 11 (after Allure report is generated)
+RUN --mount=type=secret,id=maven_settings,target=/root/.m2/settings.xml \
+    --mount=type=cache,target=/root/.m2/repository \
+    chmod +x /code/mvnw && \
+    /code/mvnw org.sonarsource.scanner.maven:sonar-maven-plugin:3.9.1.2184:sonar
 
 # Stage 3: Generate Allure report with JDK 8
-FROM eclipse-temurin:8-jdk AS allure-reporter
+FROM docker.opsbox.dev/eclipse-temurin:8-jdk AS allure-reporter
 
 # Set working directory
 WORKDIR /code
@@ -62,7 +68,7 @@ RUN --mount=type=secret,id=maven_settings,target=/root/.m2/settings.xml \
     /code/mvnw allure:report
 
 # Stage 4: Runtime stage with Eclipse Temurin JRE 8
-FROM eclipse-temurin:8-jre
+FROM docker.opsbox.dev/eclipse-temurin:8-jre
 
 # Install necessary packages for running the application
 RUN apt-get update && \

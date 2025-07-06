@@ -80,7 +80,15 @@ The report will be available at: `target/site/allure-maven-plugin/index.html`
 ```bash
 # Run SonarQube analysis with authentication token
 mvn sonar:sonar -Dsonar.host.url=http://localhost -Dsonar.login=YOUR_TOKEN
+
+# Or using Docker (recommended) - includes Allure report generation
+make sonar
+
+# Or using the dedicated script - includes Allure report generation
+./run-sonar.sh
 ```
+
+**Note**: SonarQube analysis requires Allure reports to be generated first. The Docker-based commands automatically handle this dependency.
 
 Replace `YOUR_TOKEN` with your actual SonarQube authentication token.
 
@@ -101,6 +109,30 @@ Replace `YOUR_TOKEN` with your actual SonarQube authentication token.
 
 # Alternative: Using system Maven
 mvn clean compile test allure:report sonar:sonar -Dsonar.host.url=http://localhost -Dsonar.login=YOUR_TOKEN
+```
+
+## Makefile Support
+
+The project includes a Makefile for easy management of common tasks:
+
+```bash
+# Show available commands
+make help
+
+# Build the Docker image
+make build
+
+# Run the application container
+make run
+
+# Run SonarQube analysis via Docker
+make sonar
+
+# Clean up Docker resources
+make clean
+
+# Build and run everything
+make all
 ```
 
 ## Docker Support
@@ -139,6 +171,27 @@ docker-compose up --build
 - **Faster builds**: No Maven download/installation during build
 - **Docker Secrets**: Secure handling of Maven settings.xml in production
 - **Maven Cache**: Persistent Maven repository cache for faster builds
+- **SonarQube Docker**: Isolated SonarQube analysis in Docker container
+
+### SonarQube Docker Analysis
+
+The project provides a dedicated Docker-based SonarQube analysis that includes Allure report generation:
+
+```bash
+# Run Allure report generation and SonarQube analysis in Docker container
+make sonar
+
+# Or using the dedicated script
+./run-sonar.sh
+```
+
+**Benefits of SonarQube Docker:**
+- **Isolation**: SonarQube analysis runs in isolated container
+- **Consistency**: Same environment across different machines
+- **No Local Setup**: No need to install SonarQube scanner locally
+- **JDK 11**: Uses JDK 11 specifically for SonarQube analysis
+- **Settings Integration**: Automatically uses your Maven settings.xml
+- **Allure Integration**: Automatically generates Allure reports before SonarQube analysis
 
 ### Security with Docker Secrets
 
