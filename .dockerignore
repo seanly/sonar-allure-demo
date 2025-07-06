@@ -1,0 +1,68 @@
+# Maven build artifacts
+target/
+target
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# IDE files
+.idea/
+*.iws
+*.iml
+*.ipr
+.vscode/
+.settings/
+.project
+.classpath
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Allure reports and results (will be generated in container)
+allure-results/
+allure-report/
+.allure/
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# Maven settings (use Docker secrets in production)
+settings.xml
+
+# Build and test artifacts
+target/
+target
+allure-results/
+allure-report/
+.allure/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+Thumbs.db 

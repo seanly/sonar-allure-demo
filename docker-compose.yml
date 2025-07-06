@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  sonar-allure-demo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      secrets:
+        - maven_settings
+      args:
+        BUILDKIT_INLINE_CACHE: 1
+    container_name: sonar-allure-demo-jdk8
+    ports:
+      - "8080:8080"
+    volumes:
+      # Mount Allure reports for easy access
+      - ./allure-reports:/app/allure-report
+      # Mount Maven cache for faster builds
+      - maven-cache:/root/.m2
+    environment:
+      - JAVA_OPTS=-Xmx512m
+    restart: unless-stopped
+
+secrets:
+  maven_settings:
+    file: ./settings.xml
+
+volumes:
+  maven-cache:
+    driver: local 

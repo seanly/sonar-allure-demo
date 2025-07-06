@@ -12,10 +12,11 @@ This project demonstrates:
 
 ## Prerequisites
 
-- Java 17 or higher
-- Maven 3.6 or higher
+- Java 8 or higher (configured for JDK 8, uses Eclipse Temurin)
+- Maven 3.9.6 (included via Maven wrapper)
 - SonarQube server running (default: http://localhost)
 - Allure command line tool (optional, for local report generation)
+- Docker (optional, for containerized builds)
 
 ## Project Structure
 
@@ -55,14 +56,20 @@ Allure is configured with:
 ### Running Tests
 
 ```bash
-# Run tests and generate Allure results
+# Run tests and generate Allure results (using Maven wrapper)
+./mvnw test
+
+# Or using system Maven
 mvn test
 ```
 
 ### Generating Allure Reports
 
 ```bash
-# Generate Allure HTML report
+# Generate Allure HTML report (using Maven wrapper)
+./mvnw allure:report
+
+# Or using system Maven
 mvn allure:report
 ```
 
@@ -80,18 +87,83 @@ Replace `YOUR_TOKEN` with your actual SonarQube authentication token.
 ### Complete Workflow
 
 ```bash
-# 1. Clean and compile
-mvn clean compile
+# 1. Clean and compile (using Maven wrapper)
+./mvnw clean compile
 
 # 2. Run tests
-mvn test
+./mvnw test
 
 # 3. Generate Allure report
-mvn allure:report
+./mvnw allure:report
 
 # 4. Run SonarQube analysis
-mvn sonar:sonar -Dsonar.host.url=http://localhost -Dsonar.login=YOUR_TOKEN
+./mvnw sonar:sonar -Dsonar.host.url=http://localhost -Dsonar.login=YOUR_TOKEN
+
+# Alternative: Using system Maven
+mvn clean compile test allure:report sonar:sonar -Dsonar.host.url=http://localhost -Dsonar.login=YOUR_TOKEN
 ```
+
+## Docker Support
+
+### Building with Docker
+
+The project includes Docker support with Eclipse Temurin JDK 8:
+
+```bash
+# Build and run using the provided script
+./build-and-run.sh
+
+# Or manually build and run
+docker build -t sonar-allure-demo:eclipse-jdk8 .
+docker run --rm -p 8080:8080 \
+    -v $(pwd)/allure-reports:/app/allure-report \
+    sonar-allure-demo:eclipse-jdk8
+
+# Using Docker Compose
+docker-compose up --build
+
+# Build with Docker BuildKit secrets
+./build-and-run.sh
+
+# Or using Docker Compose with BuildKit secrets
+docker-compose up --build
+```
+
+### Docker Features
+
+- **Multi-stage build**: Optimized image size
+- **Eclipse Temurin JDK 8**: Reliable and well-maintained JDK distribution
+- **Maven Wrapper**: No Maven installation required, uses project's Maven wrapper
+- **Allure Reports**: Mounted volume for easy access to test reports
+- **Alpine Linux**: Lightweight runtime image
+- **Faster builds**: No Maven download/installation during build
+- **Docker Secrets**: Secure handling of Maven settings.xml in production
+- **Maven Cache**: Persistent Maven repository cache for faster builds
+
+### Security with Docker Secrets
+
+For production deployments, the project supports Docker secrets for secure handling of sensitive configuration:
+
+```bash
+# Development (settings.xml copied into image)
+docker build -t sonar-allure-demo:eclipse-jdk8 .
+
+# Production (settings.xml as Docker secret)
+docker build -f Dockerfile.prod -t sonar-allure-demo:prod .
+docker run --secret maven_settings=settings.xml sonar-allure-demo:prod
+```
+
+**Benefits of Docker Secrets:**
+- **Security**: Sensitive data not embedded in Docker images
+- **Flexibility**: Different settings for different environments
+- **Compliance**: Meets security requirements for production deployments
+- **Audit Trail**: Secret access can be logged and monitored
+
+**Benefits of Maven Cache:**
+- **Faster Builds**: Dependencies cached between builds
+- **Reduced Network**: Less dependency downloads
+- **Consistent**: Same dependencies across builds
+- **Efficient**: Leverages Docker BuildKit cache layers
 
 ## Dependencies
 
