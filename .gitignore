@@ -9,6 +9,7 @@ dependency-reduced-pom.xml
 buildNumber.properties
 .mvn/timing.properties
 .mvn/wrapper/maven-wrapper.jar
+settings.xml
 
 # Java
 *.class
@@ -63,4 +64,8 @@ logs/
 *~
 
 # SonarQube
-.sonar/ 
+.sonar/
+
+# Allure reports
+allure-report/
+allure-reports/ 
