@@ -43,6 +43,8 @@ The project is configured to use SonarQube with the following settings:
 - **SonarQube URL**: http://localhost
 - **Authentication**: Uses token-based authentication
 - **Project Key**: com.example:sonar-allure-demo
+- **Project JDK**: JDK 8 (configured via sonar.java.jdkHome)
+- **Analysis JDK**: JDK 11 (for SonarQube scanner)
 
 ### Allure Configuration
 
@@ -192,6 +194,7 @@ make sonar
 - **JDK 11**: Uses JDK 11 specifically for SonarQube analysis
 - **Settings Integration**: Automatically uses your Maven settings.xml
 - **Allure Integration**: Automatically generates Allure reports before SonarQube analysis
+- **Project JDK Support**: Automatically configures JDK 8 for project analysis
 
 ### Security with Docker Secrets
 

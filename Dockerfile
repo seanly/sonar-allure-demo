@@ -27,6 +27,12 @@ WORKDIR /code
 # Create Maven settings directory
 RUN mkdir -p /root/.m2
 
+# Install JDK 8 for SonarQube analysis (project uses JDK 8)
+RUN apt-get update && \
+    apt-get install -y openjdk-8-jdk && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
 # Copy compiled classes and test results from compiler stage
 COPY --from=compiler /code/target/classes/ /code/target/classes/
 COPY --from=compiler /code/target/test-classes/ /code/target/test-classes/
@@ -46,7 +52,8 @@ RUN --mount=type=secret,id=maven_settings,target=/root/.m2/settings.xml \
 RUN --mount=type=secret,id=maven_settings,target=/root/.m2/settings.xml \
     --mount=type=cache,target=/root/.m2/repository \
     chmod +x /code/mvnw && \
-    /code/mvnw org.sonarsource.scanner.maven:sonar-maven-plugin:3.9.1.2184:sonar
+    /code/mvnw sonar:sonar \
+        -Dsonar.java.jdkHome=/usr/lib/openjdk-8
 
 # Stage 3: Generate Allure report with JDK 8
 FROM docker.opsbox.dev/eclipse-temurin:8-jdk AS allure-reporter
