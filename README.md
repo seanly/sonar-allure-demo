@@ -87,7 +87,7 @@ mvn sonar:sonar -Dsonar.host.url=http://localhost -Dsonar.login=YOUR_TOKEN
 make sonar
 
 # Or using the dedicated script - includes Allure report generation
-./run-sonar.sh
+./scripts/run-sonar.sh
 ```
 
 **Note**: SonarQube analysis requires Allure reports to be generated first. The Docker-based commands automatically handle this dependency.
@@ -130,6 +130,9 @@ make run
 # Run SonarQube analysis via Docker
 make sonar
 
+# Run Trivy security scan
+make trivy-scanner
+
 # Clean up Docker resources
 make clean
 
@@ -145,7 +148,7 @@ The project includes Docker support with Eclipse Temurin JDK 8:
 
 ```bash
 # Build and run using the provided script
-./build-and-run.sh
+./scripts/build-and-run.sh
 
 # Or manually build and run
 docker build -t sonar-allure-demo:eclipse-jdk8 .
@@ -157,7 +160,7 @@ docker run --rm -p 8080:8080 \
 docker-compose up --build
 
 # Build with Docker BuildKit secrets
-./build-and-run.sh
+./scripts/build-and-run.sh
 
 # Or using Docker Compose with BuildKit secrets
 docker-compose up --build
@@ -184,7 +187,7 @@ The project provides a dedicated Docker-based SonarQube analysis that includes A
 make sonar
 
 # Or using the dedicated script
-./run-sonar.sh
+./scripts/run-sonar.sh
 ```
 
 **Benefits of SonarQube Docker:**
@@ -195,6 +198,26 @@ make sonar
 - **Settings Integration**: Automatically uses your Maven settings.xml
 - **Allure Integration**: Automatically generates Allure reports before SonarQube analysis
 - **Project JDK Support**: Automatically configures JDK 8 for project analysis
+
+### Trivy Security Scanning
+
+The project includes Trivy security scanning for vulnerability detection in dependencies:
+
+```bash
+# Run Trivy security scan via Docker
+make trivy-scanner
+
+# Or using the dedicated script
+./scripts/run-trivy-scanner.sh
+```
+
+**Benefits of Trivy Security Scanning:**
+- **Dependency Scanning**: Scans all project dependencies for known vulnerabilities
+- **SBOM Integration**: Uses CycloneDX SBOM for comprehensive dependency analysis
+- **Severity Filtering**: Focuses on CRITICAL and HIGH severity vulnerabilities
+- **SonarQube Integration**: Generates SonarQube-compatible reports for unified analysis
+- **Offline Scanning**: Supports offline vulnerability scanning
+- **Docker Isolation**: Runs in isolated container for security and consistency
 
 ### Security with Docker Secrets
 

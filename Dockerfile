@@ -1,80 +1,28 @@
 # Multi-stage build for Java Maven project
-# Stage 1: Compile and test with JDK 8
-FROM docker.opsbox.dev/eclipse-temurin:8-jdk AS compiler
+# Stage 1: Tools image with JDK 11, JDK 8, and Trivy
+FROM docker.opsbox.dev/seanly/toolset:openjdk-8-2 AS tools
 
-# Set working directory
-WORKDIR /code
-
-# Create Maven settings directory
-RUN mkdir -p /root/.m2
-
-# Copy entire project to /code
-COPY ./ /code/
-
-# Mount settings.xml as secret and Maven cache during build (requires BuildKit)
-# syntax=docker/dockerfile:1.4
-RUN --mount=type=secret,id=maven_settings,target=/root/.m2/settings.xml \
-    --mount=type=cache,target=/root/.m2/repository \
-    chmod +x /code/mvnw && \
-    /code/mvnw clean test
-
-# Stage 2: SonarQube scan with JDK 11 (includes Allure dependency)
-FROM docker.opsbox.dev/eclipse-temurin:11-jdk AS sonar-scanner
-
-# Set working directory
-WORKDIR /code
-
-# Create Maven settings directory
-RUN mkdir -p /root/.m2
-
-# Install JDK 8 for SonarQube analysis (project uses JDK 8)
+# Install necessary packages
 RUN apt-get update && \
-    apt-get install -y openjdk-8-jdk && \
+    apt-get install -y wget curl && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy compiled classes and test results from compiler stage
-COPY --from=compiler /code/target/classes/ /code/target/classes/
-COPY --from=compiler /code/target/test-classes/ /code/target/test-classes/
-COPY --from=compiler /code/target/surefire-reports/ /code/target/surefire-reports/
-COPY --from=compiler /code/target/allure-results/ /code/target/allure-results/
+# Copy JDK 8 from JDK 8 image
+COPY --from=docker.opsbox.dev/seanly/toolset:openjdk-11 /opt/java/openjdk /opt/java/openjdk-11
+RUN ln -sf /opt/java/openjdk-11 /usr/lib/openjdk-11
 
-# Copy source code and project files
-COPY ./ /code/
+# Copy Trivy from custom toolset
+COPY --from=docker.opsbox.dev/seanly/toolset:trivy / /
 
-# Generate Allure report first (required for SonarQube)
-RUN --mount=type=secret,id=maven_settings,target=/root/.m2/settings.xml \
-    --mount=type=cache,target=/root/.m2/repository \
-    chmod +x /code/mvnw && \
-    /code/mvnw allure:report
+# Download the SonarQube template
+RUN wget -O /sonarqube.tpl https://proxy.opsbox.dev/https://raw.githubusercontent.com/mendhak/trivy-template-output-to-sonarqube/refs/heads/master/sonarqube.tpl
 
-# Run SonarQube scan with JDK 11 (after Allure report is generated)
-RUN --mount=type=secret,id=maven_settings,target=/root/.m2/settings.xml \
-    --mount=type=cache,target=/root/.m2/repository \
-    chmod +x /code/mvnw && \
-    /code/mvnw sonar:sonar \
-        -Dsonar.java.jdkHome=/usr/lib/openjdk-8
+# Copy scripts and make them executable
+COPY scripts/ /scripts/
+RUN chmod +x /scripts/*.sh
 
-# Stage 3: Generate Allure report with JDK 8
-FROM docker.opsbox.dev/eclipse-temurin:8-jdk AS allure-reporter
-
-# Set working directory
-WORKDIR /code
-
-# Create Maven settings directory
-RUN mkdir -p /root/.m2
-
-# Copy project files and test results
-COPY ./ /code/
-COPY --from=compiler /code/target/allure-results/ /code/target/allure-results/
-
-# Generate Allure report
-RUN --mount=type=secret,id=maven_settings,target=/root/.m2/settings.xml \
-    --mount=type=cache,target=/root/.m2/repository \
-    chmod +x /code/mvnw && \
-    /code/mvnw allure:report
-
-# Stage 4: Runtime stage with Eclipse Temurin JRE 8
+# Stage 2: Runtime stage with Eclipse Temurin JRE 8
 FROM docker.opsbox.dev/eclipse-temurin:8-jre
 
 # Install necessary packages for running the application
@@ -86,17 +34,14 @@ RUN apt-get update && \
 # Set working directory
 WORKDIR /app
 
-# Copy the built classes from compiler stage
-COPY --from=compiler /code/target/classes/ /app/classes/
-# Copy Allure report from allure-reporter stage
-COPY --from=allure-reporter /code/target/site/allure-maven-plugin/ /app/allure-report/
+# Copy the jar file from target directory
+COPY target/*.jar /app/app.jar
 
 # Create a simple script to run the application
 RUN echo '#!/bin/bash\n\
 echo "Starting Java Application..."\n\
-java -cp /app/classes com.example.App\n\
-echo "Application finished."\n\
-echo "Allure report is available at /app/allure-report/index.html"' > /app/run.sh && \
+java -jar /app/app.jar\n\
+echo "Application finished."' > /app/run.sh && \
 chmod +x /app/run.sh
 
 # Expose port (if needed for web applications)

@@ -20,6 +20,7 @@
         <maven-surefire-plugin.version>3.1.2</maven-surefire-plugin.version>
         <allure.version>2.15.0</allure.version>
         <junit.jupiter.version>5.10.2</junit.jupiter.version>
+        <cyclonedx-maven-plugin.version>2.7.9</cyclonedx-maven-plugin.version>
     </properties>
     
     <build>
@@ -46,7 +47,31 @@
                         <useModulePath>false</useModulePath>
                         <systemPropertyVariables>
                             <allure.results.directory>${project.build.directory}/allure-results</allure.results.directory>
+                            <log4j2.configurationFile>log4j2.xml</log4j2.configurationFile>
+                            <com.sun.management.jmxremote>false</com.sun.management.jmxremote>
+                            <log4j2.disable.jmx>true</log4j2.disable.jmx>
                         </systemPropertyVariables>
+                    </configuration>
+                </plugin>
+                
+                <!-- CycloneDX Maven Plugin for SBOM generation -->
+                <plugin>
+                    <groupId>org.cyclonedx</groupId>
+                    <artifactId>cyclonedx-maven-plugin</artifactId>
+                    <version>${cyclonedx-maven-plugin.version}</version>
+                    <executions>
+                        <execution>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>makeAggregateBom</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <outputFormat>json</outputFormat>
+                        <outputName>bom</outputName>
+                        <includeBomSerialNumber>false</includeBomSerialNumber>
+                        <includeProperties>false</includeProperties>
                     </configuration>
                 </plugin>
             </plugins>
@@ -68,6 +93,21 @@
                 <groupId>io.qameta.allure</groupId>
                 <artifactId>allure-junit5</artifactId>
                 <version>${allure.version}</version>
+                <scope>test</scope>
+            </dependency>
+            
+            <!-- Vulnerable dependency for testing Trivy scan -->
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-core</artifactId>
+                <version>2.14.1</version>
+            </dependency>
+            
+            <!-- SLF4J binding for Log4j2 to reduce warnings -->
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-slf4j-impl</artifactId>
+                <version>2.14.1</version>
                 <scope>test</scope>
             </dependency>
         </dependencies>
