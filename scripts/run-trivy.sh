@@ -24,20 +24,7 @@ if [ ! -f "target/bom.json" ]; then
     fi
 fi
 
-# Download the SonarQube template if not already present
-if [ ! -f "/tmp/sonarqube.tpl" ]; then
-    echo "Downloading SonarQube template..."
-    wget -O /tmp/sonarqube.tpl https://proxy.opsbox.dev/https://raw.githubusercontent.com/mendhak/trivy-template-output-to-sonarqube/refs/heads/master/sonarqube.tpl
-fi
-
-# Run Trivy security scan with configurable severity levels and SonarQube template
-if [ -f "target/bom.json" ]; then
-    echo "Running Trivy scan on SBOM..."
-    trivy sbom --skip-db-update --skip-java-db-update --offline-scan target/bom.json -s "$TRIVY_SEVERITY" --format template --template @/tmp/sonarqube.tpl -o target/trivy-report.json
-    echo "Trivy scan completed successfully."
-else
-    echo "Warning: target/bom.json not found, creating empty report"
-    echo '{"issues": []}' > target/trivy-report.json
-fi
+trivy fs --scanners vuln --skip-db-update --skip-java-db-update . -s "$TRIVY_SEVERITY" --format sarif -o target/trivy-report.sarif
+echo "Trivy scan completed successfully."
 
 echo "Trivy security scan completed." 

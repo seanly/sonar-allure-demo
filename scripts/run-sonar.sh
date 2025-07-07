@@ -31,7 +31,7 @@ chmod +x ./mvnw
 ./mvnw allure:report && \
 ./mvnw sonar:sonar \
     -Dsonar.java.jdkHome=/usr/lib/openjdk \
-    -Dsonar.externalIssuesReportPaths=target/trivy-report.json
+    -Dsonar.sarifReportPaths=target/trivy-report.sarif
 
 if [ $? -eq 0 ]; then
     echo "✅ SonarQube analysis completed successfully!"

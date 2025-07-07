@@ -9,10 +9,11 @@ set -e
 # Get the command from first argument
 COMMAND=${1:-help}
 MODE=${2:---local}
+FORCE_BUILD=${3:-false}
 
 # Function to show usage
 show_usage() {
-    echo "Usage: $0 [COMMAND] [MODE]"
+    echo "Usage: $0 [COMMAND] [MODE] [--force]"
     echo ""
     echo "Available commands:"
     echo "  test     - Run Maven tests"
@@ -27,10 +28,14 @@ show_usage() {
     echo "  --local  - Run locally (default)"
     echo "  --docker - Run in Docker container"
     echo ""
+    echo "Options:"
+    echo "  --force  - Force rebuild Docker image (Docker mode only)"
+    echo ""
     echo "Examples:"
     echo "  $0 test"
     echo "  $0 package --docker"
     echo "  $0 all --local"
+    echo "  $0 sonar --docker --force"
 }
 
 # Function to execute script locally
@@ -53,6 +58,7 @@ execute_local() {
 # Function to execute script in Docker
 execute_docker() {
     local script_name="run-$1.sh"
+    local force_build="$2"
     
     # Check if settings.xml exists in ~/.m2
     SETTINGS_PATH="$HOME/.m2/settings.xml"
@@ -63,10 +69,20 @@ execute_docker() {
     fi
     
     echo "✅ Found settings.xml at $SETTINGS_PATH"
-    echo "🔧 Building tools image..."
     
-    # Build the tools image
-    docker build --target tools -t sonar-allure-demo:tools .
+    # Check if force build is requested
+    if [ "$force_build" = "--force" ]; then
+        echo "🔧 Force building tools image..."
+        docker build --target tools -t sonar-allure-demo:tools .
+    else
+        # Check if the tools image already exists
+        if docker image inspect sonar-allure-demo:tools >/dev/null 2>&1; then
+            echo "✅ Tools image already exists, skipping build..."
+        else
+            echo "🔧 Building tools image..."
+            docker build --target tools -t sonar-allure-demo:tools .
+        fi
+    fi
     
     echo "🚀 Executing $script_name in Docker container..."
     
@@ -87,42 +103,42 @@ execute_docker() {
 case $COMMAND in
     "test")
         if [ "$MODE" = "--docker" ]; then
-            execute_docker "test"
+            execute_docker "test" "$FORCE_BUILD"
         else
             execute_local "test"
         fi
         ;;
     "package")
         if [ "$MODE" = "--docker" ]; then
-            execute_docker "package"
+            execute_docker "package" "$FORCE_BUILD"
         else
             execute_local "package"
         fi
         ;;
     "allure")
         if [ "$MODE" = "--docker" ]; then
-            execute_docker "allure"
+            execute_docker "allure" "$FORCE_BUILD"
         else
             execute_local "allure"
         fi
         ;;
     "sonar")
         if [ "$MODE" = "--docker" ]; then
-            execute_docker "sonar"
+            execute_docker "sonar" "$FORCE_BUILD"
         else
             execute_local "sonar"
         fi
         ;;
     "trivy")
         if [ "$MODE" = "--docker" ]; then
-            execute_docker "trivy"
+            execute_docker "trivy" "$FORCE_BUILD"
         else
             execute_local "trivy"
         fi
         ;;
     "all")
         if [ "$MODE" = "--docker" ]; then
-            execute_docker "all"
+            execute_docker "all" "$FORCE_BUILD"
         else
             execute_local "all"
         fi
